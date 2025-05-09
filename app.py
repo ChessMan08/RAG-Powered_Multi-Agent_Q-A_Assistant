@@ -5,19 +5,23 @@ st.set_page_config(page_title="RAG Q&A", layout="centered")
 
 st.title("RAG‑Powered Multi‑Agent Q&A")
 
-# Build index one‑time
+# One‑time build flag
 if 'built' not in st.session_state:
     st.session_state.built = False
 
+# If not built, show build button and then stop
 if not st.session_state.built:
     if st.button("Build RAG Index (one‑time)"):
         from ingestion import build_faiss_index
         build_faiss_index()
         st.session_state.built = True
         st.success("Index built! You can now ask questions below.")
-    st.stop()
+        # After building, do NOT st.stop() so that on this same run the UI appears
+    else:
+        # If button not clicked yet, do stop here
+        st.stop()
 
-# Once built, show Q&A UI
+# At this point built==True, so UI always shows
 from agent import handle_query
 
 query = st.text_input("Ask a question:")
