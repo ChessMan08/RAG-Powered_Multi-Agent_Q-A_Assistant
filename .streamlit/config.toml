@@ -1,4 +1,2 @@
 [server]
-runOnSave = false
-enableWatchdog = false
 fileWatcherType = "none"
