@@ -1,11 +1,4 @@
-import os, logging
-
-os.environ["TRANSFORMERS_VERBOSITY"] = "error"
-os.environ["SENTENCE_TRANSFORMERS_VERBOSE"] = "0"
-logging.getLogger("transformers").setLevel(logging.ERROR)
-logging.getLogger("sentence_transformers").setLevel(logging.ERROR)
-logging.getLogger("torch").setLevel(logging.ERROR)
-
+import os
 import glob
 import pickle
 import numpy as np
@@ -13,8 +6,6 @@ import faiss
 from sentence_transformers import SentenceTransformer
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-import nltk
-nltk.download('wordnet')
 # Model for embeddings
 EMBED_MODEL = "all-MiniLM-L6-v2"
 
