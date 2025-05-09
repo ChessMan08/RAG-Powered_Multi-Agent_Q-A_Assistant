@@ -21,7 +21,17 @@ if not st.session_state.index_built:
         st.session_state.index_built = True
         st.success("Index built! Now you can ask questions below.")
     st.stop()
-
+else:
+    from agent import handle_query
+    
+    query = st.text_input("Ask a question:")
+    if st.button("Submit") and query:
+        res = handle_query(query)
+        st.subheader("Answer")
+        st.write(res["answer"])
+        st.sidebar.header("Agent Log")
+        st.sidebar.write(res["log"])
+        
 from retrieval import retrieve
 from tools.calculator import calculate
 from tools.dictionary import define
