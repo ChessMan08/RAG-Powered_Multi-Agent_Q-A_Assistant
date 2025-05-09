@@ -29,7 +29,7 @@ def handle_query(query: str) -> dict:
     from openai import OpenAI
     client = OpenAI()
     resp = client.chat.completions.create(
-        model="gpt-4",
+        model="gpt-3.5-turbo",
         messages=[{"role": "system", "content": prompt}]
     )
     ans = resp.choices[0].message.content
