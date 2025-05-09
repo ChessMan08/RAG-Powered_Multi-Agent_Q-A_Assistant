@@ -1,4 +1,11 @@
-import os
+import os, logging
+
+os.environ["TRANSFORMERS_VERBOSITY"] = "error"
+os.environ["SENTENCE_TRANSFORMERS_VERBOSE"] = "0"
+logging.getLogger("transformers").setLevel(logging.ERROR)
+logging.getLogger("sentence_transformers").setLevel(logging.ERROR)
+logging.getLogger("torch").setLevel(logging.ERROR)
+
 import pickle
 import numpy as np
 import faiss
