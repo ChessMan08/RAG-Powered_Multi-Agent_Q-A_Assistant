@@ -22,6 +22,6 @@ query = st.text_input("Ask a question:")
 if st.button("Submit") and query:
     res = handle_query(query)
     st.sidebar.header("Agent Log")
-    st.sidebar.write(f"Q: {query} | {res['log']}")
+    st.sidebar.write(f"Q: {query}")
     st.subheader("Answer")
     st.write(res["answer"])
