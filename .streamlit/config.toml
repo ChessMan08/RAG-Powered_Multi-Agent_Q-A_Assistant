@@ -1,4 +1,3 @@
 [server]
-# don’t re‑run on file save / disable watchdog
 runOnSave = false
 enableWatchdog = false
