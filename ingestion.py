@@ -1,3 +1,5 @@
+import nltk
+nltk.download('wordnet')
 import os
 import glob
 import pickle
@@ -5,9 +7,6 @@ import numpy as np
 import faiss
 from sentence_transformers import SentenceTransformer
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-
-import nltk
-nltk.download('wordnet')
 
 # Model for embeddings
 EMBED_MODEL = "all-MiniLM-L6-v2"
