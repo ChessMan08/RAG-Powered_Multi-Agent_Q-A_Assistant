@@ -2,3 +2,4 @@ openai
 faiss-cpu
 streamlit
 nltk
+langchain
