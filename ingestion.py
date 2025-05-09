@@ -1,46 +1,46 @@
+
 import os
 import glob
 import pickle
-import numpy as np
+import nltk
 import faiss
 from sentence_transformers import SentenceTransformer
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-# Model for embeddings
-EMBED_MODEL = "all-MiniLM-L6-v2"
+# Download WordNet once
+nltk.download('wordnet')
 
-def build_faiss_index(docs_path: str = "docs/",
-                      index_file: str = "faiss_index.bin",
-                      chunks_file: str = "chunks.pkl"):
-    """
-    Load .txt files, chunk them, embed with SentenceTransformer, build & save FAISS index.
-    """
-    # Load documents
+EMBED_MODEL = "all-MiniLM-L6-v2"
+INDEX_FILE = "faiss_index.bin"
+CHUNKS_FILE = "chunks.pkl"
+
+def build_faiss_index(docs_path: str = "docs/"):
+    # Load .txt files
     files = glob.glob(os.path.join(docs_path, "*.txt"))
     if not files:
-        raise FileNotFoundError(f"No .txt files found in {docs_path}")
+        raise FileNotFoundError(f"No .txt files in {docs_path}")
     texts = [open(f, encoding='utf-8').read() for f in files]
 
     # Chunk texts
     splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     chunks = []
-    for txt in texts:
-        chunks.extend(splitter.split_text(txt))
+    for t in texts:
+        chunks.extend(splitter.split_text(t))
 
-    # Embed chunks
+    # Embed
     embedder = SentenceTransformer(EMBED_MODEL)
-    embeddings = embedder.encode(chunks, convert_to_numpy=True)
+    embeddings = embedder.encode(chunks, convert_to_numpy=True).astype('float32')
 
     # Build FAISS index
-    dim = embeddings.shape[1]
-    index = faiss.IndexFlatL2(dim)
+    index = faiss.IndexFlatL2(embeddings.shape[1])
     index.add(embeddings)
 
-    # Save index and chunks
-    faiss.write_index(index, index_file)
-    with open(chunks_file, "wb") as f:
+    # Save
+    faiss.write_index(index, INDEX_FILE)
+    with open(CHUNKS_FILE, "wb") as f:
         pickle.dump(chunks, f)
-    print(f"Built FAISS index ({index_file}) with {len(chunks)} chunks.")
+
+    print(f"Built index with {len(chunks)} chunks.")
 
 if __name__ == "__main__":
     build_faiss_index()
