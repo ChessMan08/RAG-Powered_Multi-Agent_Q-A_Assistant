@@ -3,21 +3,19 @@ import glob
 import pickle
 import numpy as np
 import faiss
+from sentence_transformers import SentenceTransformer
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from openai import OpenAI
+
+# Model for embeddings
+EMBED_MODEL = "all-MiniLM-L6-v2"
 
 def build_faiss_index(docs_path: str = "docs/",
                       index_file: str = "faiss_index.bin",
                       chunks_file: str = "chunks.pkl"):
     """
-    Load text files, chunk them, embed with OpenAI, and build & save a FAISS index.
+    Load .txt files, chunk them, embed with SentenceTransformer, build & save FAISS index.
     """
-    # Ensure API key is set
-    if not os.getenv('OPENAI_API_KEY'):
-        raise ValueError("OPENAI_API_KEY not set in environment.")
-    client = OpenAI()
-
-    # Load raw text documents
+    # Load documents
     files = glob.glob(os.path.join(docs_path, "*.txt"))
     if not files:
         raise FileNotFoundError(f"No .txt files found in {docs_path}")
@@ -30,22 +28,19 @@ def build_faiss_index(docs_path: str = "docs/",
         chunks.extend(splitter.split_text(txt))
 
     # Embed chunks
-    embeddings = []
-    for chunk in chunks:
-        emb = client.embeddings.create(input=chunk, model="text-embedding-ada-002")["data"][0]["embedding"]
-        embeddings.append(emb)
-    embeddings = np.array(embeddings).astype('float32')
+    embedder = SentenceTransformer(EMBED_MODEL)
+    embeddings = embedder.encode(chunks, convert_to_numpy=True)
 
     # Build FAISS index
-    index = faiss.IndexFlatL2(embeddings.shape[1])
+    dim = embeddings.shape[1]
+    index = faiss.IndexFlatL2(dim)
     index.add(embeddings)
 
-    # Persist index and chunks
+    # Save index and chunks
     faiss.write_index(index, index_file)
     with open(chunks_file, "wb") as f:
         pickle.dump(chunks, f)
-    print(f"Index built: {index_file}, chunks saved: {chunks_file}")
-
+    print(f"Built FAISS index ({index_file}) with {len(chunks)} chunks.")
 
 if __name__ == "__main__":
     build_faiss_index()
