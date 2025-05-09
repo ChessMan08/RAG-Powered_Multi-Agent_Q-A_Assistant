@@ -1,61 +1,38 @@
-from retrieval import retrieve
-from tools.calculator import calculate
-from tools.dictionary import define
-from transformers import pipeline
-
-# Generative model
-LLM_MODEL = "t5-small"  # switch to Hugging Face's standard T5 model for compatibility
-# Lazy initialization of the text-generation pipeline
-generator = None
-
-def get_generator():
-    """Lazily load and return the HF text2text-generation pipeline."""
-    global generator
-    if generator is None:
-        from transformers import pipeline
-        generator = pipeline(
-            "text2text-generation",
-            model=LLM_MODEL,
-            tokenizer=LLM_MODEL,
-            device=-1,
-            framework="pt"
-        )
-    return generator
-log = []
-
 def handle_query(query: str) -> dict:
-    """
-    Route to calculator, dictionary, or RAG. Returns branch, snippets, answer, log.
-    """
-    q_low = query.lower()
-    # calculator
-    if "calculate" in q_low:
-        expr = q_low.replace("calculate", '').strip()
-        result = calculate(expr)
-        entry = f"Calculator branch: expr={expr} -> {result}"
-        log.append(entry)
-        return {"branch":"calculator","snippets":[],"answer":result,"log":entry}
-    # dictionary
-    if "define" in q_low:
-        term = q_low.replace("define", '').strip()
-        result = define(term)
-        entry = f"Dictionary branch: term={term} -> {result}"
-        log.append(entry)
-        return {"branch":"dictionary","snippets":[],"answer":result,"log":entry}
-    # RAG branch
-    snippets = retrieve(query)
-    # build prompt: context then direct instruction
-    context = "\n".join([f"- {s}" for s in snippets])
-    prompt = (
-        f"You are given the following context snippets:\n{context}\n"
-        f"Answer the question below concisely and only output the answer (no extra text).\n"
-        f"Question: {query}\nAnswer:"
+    from transformers import pipeline
+    from retrieval import retrieve
+    from tools.calculator import calculate
+    from tools.dictionary import define
+
+    generator = pipeline(
+        "text2text-generation",
+        model="t5-small",
+        device=-1,
+        framework="pt"
     )
-    outputs = get_generator()(""""+ "
-    ")}prompt, max_length=100, num_return_sequences=1)
-    raw = outputs[0].get('generated_text', '')
-    # extract answer after 'Answer:' if present
-    answer = raw.split('Answer:')[-1].strip()
-    entry = f"RAG branch: retrieved {len(snippets)} snippets"
-    log.append(entry)
-    return {"branch":"rag","snippets":snippets,"answer":answer,"log":entry}
+
+    log = []
+    q_low = query.lower()
+
+    if "calculate" in q_low:
+        expr = q_low.replace("calculate", "").strip()
+        result = calculate(expr)
+        log.append(f"Calculator: {expr} → {result}")
+        return {"branch": "calculator", "snippets": [], "answer": result, "log": log[-1]}
+
+    if "define" in q_low:
+        term = q_low.replace("define", "").strip()
+        result = define(term)
+        log.append(f"Dictionary: {term} → {result}")
+        return {"branch": "dictionary", "snippets": [], "answer": result, "log": log[-1]}
+
+    snippets = retrieve(query)
+    prompt = (
+        "Answer the question below as clearly as possible using only the provided context.\n\n"
+        + "\n---\n".join(snippets)
+        + f"\n\nQuestion: {query}\nAnswer:"
+    )
+    output = generator(prompt, max_length=200, num_return_sequences=1)
+    answer = output[0]["generated_text"].strip()
+    log.append(f"RAG: retrieved {len(snippets)} chunks")
+    return {"branch": "rag", "snippets": snippets, "answer": answer, "log": log[-1]}
