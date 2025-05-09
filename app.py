@@ -1,48 +1,29 @@
-from retrieval import retrieve
-from tools.calculator import calculate
-from tools.dictionary import define
-from transformers import pipeline
+import streamlit as st
 
-# Generative model
-LLM_MODEL = "google/flan-t5-small"
-# Initialize text-generation pipeline on CPU
-generator = pipeline(
-    "text2text-generation", model=LLM_MODEL, device=-1
-)
-log = []
+# Page config
+st.set_page_config(page_title="RAG Q&A", layout="centered")
 
-def handle_query(query: str) -> dict:
-    """
-    Route to calculator, dictionary, or RAG. Returns branch, snippets, answer, log.
-    """
-    q_low = query.lower()
-    # calculator
-    if "calculate" in q_low:
-        expr = q_low.replace("calculate", '').strip()
-        result = calculate(expr)
-        entry = f"Calculator branch: expr={expr} -> {result}"
-        log.append(entry)
-        return {"branch":"calculator","snippets":[],"answer":result,"log":entry}
-    # dictionary
-    if "define" in q_low:
-        term = q_low.replace("define", '').strip()
-        result = define(term)
-        entry = f"Dictionary branch: term={term} -> {result}"
-        log.append(entry)
-        return {"branch":"dictionary","snippets":[],"answer":result,"log":entry}
-    # RAG branch
-    snippets = retrieve(query)
-    # build prompt: context then direct instruction
-    context = "\n".join([f"- {s}" for s in snippets])
-    prompt = (
-        f"You are given the following context snippets:\n{context}\n"
-        f"Answer the question below concisely and only output the answer (no extra text).\n"
-        f"Question: {query}\nAnswer:"
-    )
-    outputs = get_generator()(prompt, max_length=100, num_return_sequences=1)
-    raw = outputs[0].get('generated_text', '')
-    # extract answer after 'Answer:' if present
-    answer = raw.split('Answer:')[-1].strip()
-    entry = f"RAG branch: retrieved {len(snippets)} snippets"
-    log.append(entry)
-    return {"branch":"rag","snippets":snippets,"answer":answer,"log":entry}
+st.title("RAG‑Powered Multi‑Agent Q&A")
+
+# Build index one‑time
+if 'built' not in st.session_state:
+    st.session_state.built = False
+
+if not st.session_state.built:
+    if st.button("Build RAG Index (one‑time)"):
+        from ingestion import build_faiss_index
+        build_faiss_index()
+        st.session_state.built = True
+        st.success("Index built! You can now ask questions below.")
+    st.stop()
+
+# Once built, show Q&A UI
+from agent import handle_query
+
+query = st.text_input("Ask a question:")
+if st.button("Submit") and query:
+    res = handle_query(query)
+    st.sidebar.header("Agent Log")
+    st.sidebar.write(res["log"])
+    st.subheader("Answer")
+    st.write(res["answer"])
