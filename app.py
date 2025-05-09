@@ -39,7 +39,7 @@ def handle_query(query: str) -> dict:
         f"Answer the question below concisely and only output the answer (no extra text).\n"
         f"Question: {query}\nAnswer:"
     )
-    outputs = generator(prompt, max_length=100, num_return_sequences=1)
+    outputs = get_generator()(prompt, max_length=100, num_return_sequences=1)
     raw = outputs[0].get('generated_text', '')
     # extract answer after 'Answer:' if present
     answer = raw.split('Answer:')[-1].strip()
