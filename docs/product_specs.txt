@@ -1,0 +1,9 @@
+Product: Acme Smart Speaker
+Model: AS‑100  
+Dimensions: 6.5" × 4" × 4"  
+Weight: 1.2 lbs  
+Wi‑Fi: 802.11 a/b/g/n/ac  
+Bluetooth: 5.0  
+Audio: 2.5" full‑range driver, passive radiator  
+Power: 12 V⎓2 A adapter  
+Operating Temperature: 0 °C to 40 °C  

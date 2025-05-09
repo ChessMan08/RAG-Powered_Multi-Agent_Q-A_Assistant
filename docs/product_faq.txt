@@ -1,0 +1,8 @@
+Q: What is the Acme Smart Speaker?
+A: The Acme Smart Speaker is a voice‑controlled home assistant that plays music, answers questions, and controls smart‑home devices.
+
+Q: Which voice assistants does it support?
+A: It has built‑in support for Alexa and Google Assistant.
+
+Q: How do I reset the speaker to factory settings?
+A: Press and hold the power button for 10 seconds until the LED flashes red, then release.

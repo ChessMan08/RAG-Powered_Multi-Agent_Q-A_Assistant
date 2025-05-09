@@ -1,0 +1,8 @@
+Q: Where is Acme Corp headquartered?
+A: Acme Corp’s global headquarters are in Bangalore, India.
+
+Q: What is your customer support email?
+A: You can reach support at support@acmecorp.example.
+
+Q: Do you offer a developer API?
+A: Yes—see https://api.acmecorp.example/docs for endpoints, authentication, and examples.
