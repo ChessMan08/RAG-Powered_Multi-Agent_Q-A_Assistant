@@ -4,8 +4,6 @@ from nltk.corpus import wordnet
 nltk.download('wordnet')
 
 def define(term: str) -> str:
-    """Return the first WordNet definition for the term."""
+    """Return the first WordNet definition."""
     syns = wordnet.synsets(term)
-    if not syns:
-        return "No definition found."
-    return syns[0].definition()
+    return syns[0].definition() if syns else "No definition found."
