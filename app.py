@@ -1,3 +1,11 @@
+import os, logging
+
+os.environ["TRANSFORMERS_VERBOSITY"] = "error"
+os.environ["SENTENCE_TRANSFORMERS_VERBOSE"] = "0"
+logging.getLogger("transformers").setLevel(logging.ERROR)
+logging.getLogger("sentence_transformers").setLevel(logging.ERROR)
+logging.getLogger("torch").setLevel(logging.ERROR)
+
 from retrieval import retrieve
 from tools.calculator import calculate
 from tools.dictionary import define
