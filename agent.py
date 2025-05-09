@@ -1,38 +1,37 @@
 from retrieval import retrieve
 from tools.calculator import calculate
 from tools.dictionary import define
+from transformers import pipeline
+
+# Generative model
+LLM_MODEL = "google/flan-t5-base"
+# Initialize text-generation pipeline
+generator = pipeline("text2text-generation", model=LLM_MODEL)
 
 log = []
 
 def handle_query(query: str) -> dict:
-    # Decide branch
-    if "calculate" in query.lower():
-        branch = "calculator"
-        # extract expression
-        expr = query.lower().replace("calculate", "").strip()
+    # Route based on keywords
+    q_low = query.lower()
+    if "calculate" in q_low:
+        expr = q_low.replace("calculate", '').strip()
         result = calculate(expr)
-        log_entry = f"Branch=Calculator, expr={expr}, result={result}"
-        log.append(log_entry)
-        return {"branch": branch, "snippets": [], "answer": result, "log": log_entry}
-    if "define" in query.lower():
-        branch = "dictionary"
-        term = query.lower().replace("define", "").strip()
+        entry = f"Calculator: expr={expr} -> {result}"
+        log.append(entry)
+        return {"branch":"calculator","snippets":[],"answer":result,"log":entry}
+    if "define" in q_low:
+        term = q_low.replace("define", '').strip()
         result = define(term)
-        log_entry = f"Branch=Dictionary, term={term}, definition={result}"
-        log.append(log_entry)
-        return {"branch": branch, "snippets": [], "answer": result, "log": log_entry}
+        entry = f"Dictionary: term={term} -> {result}"
+        log.append(entry)
+        return {"branch":"dictionary","snippets":[],"answer":result,"log":entry}
+
     # RAG branch
-    branch = "RAG"
     snippets = retrieve(query)
-    prompt = "Context:\n" + "\n---\n".join(snippets) + f"\n\nQuestion: {query}\nAnswer:"
-    # call OpenAI ChatCompletion
-    from openai import OpenAI
-    client = OpenAI()
-    resp = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "system", "content": prompt}]
-    )
-    ans = resp.choices[0].message.content
-    log_entry = f"Branch=RAG, retrieved={len(snippets)} snippets"
-    log.append(log_entry)
-    return {"branch": branch, "snippets": snippets, "answer": ans, "log": log_entry}
+    prompt = "Use the context to answer the question.\n" + "\n---\n".join(snippets) + f"\nQuestion: {query}"
+    # Generate answer
+    gen = generator(prompt, max_length=200)
+    ans = gen[0]['generated_text']
+    entry = f"RAG: retrieved {len(snippets)} snippets"
+    log.append(entry)
+    return {"branch":"rag","snippets":snippets,"answer":ans,"log":entry}
