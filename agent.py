@@ -4,10 +4,14 @@ from tools.dictionary import define
 from transformers import pipeline
 
 # Generative model
-LLM_MODEL = "google/flan-t5-small"
+LLM_MODEL = "t5-small"  # switch to Hugging Face's standard T5 model for compatibility
 # Initialize text-generation pipeline on CPU
 generator = pipeline(
-    "text2text-generation", model=LLM_MODEL, device=-1
+    "text2text-generation",
+    model=LLM_MODEL,
+    tokenizer=LLM_MODEL,
+    device=-1,  # CPU
+    framework="pt"
 )
 log = []
 
