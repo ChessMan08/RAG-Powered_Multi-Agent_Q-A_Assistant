@@ -5,14 +5,22 @@ from transformers import pipeline
 
 # Generative model
 LLM_MODEL = "t5-small"  # switch to Hugging Face's standard T5 model for compatibility
-# Initialize text-generation pipeline on CPU
-generator = pipeline(
-    "text2text-generation",
-    model=LLM_MODEL,
-    tokenizer=LLM_MODEL,
-    device=-1,  # CPU
-    framework="pt"
-)
+# Lazy initialization of the text-generation pipeline
+generator = None
+
+def get_generator():
+    """Lazily load and return the HF text2text-generation pipeline."""
+    global generator
+    if generator is None:
+        from transformers import pipeline
+        generator = pipeline(
+            "text2text-generation",
+            model=LLM_MODEL,
+            tokenizer=LLM_MODEL,
+            device=-1,
+            framework="pt"
+        )
+    return generator
 log = []
 
 def handle_query(query: str) -> dict:
@@ -43,7 +51,8 @@ def handle_query(query: str) -> dict:
         f"Answer the question below concisely and only output the answer (no extra text).\n"
         f"Question: {query}\nAnswer:"
     )
-    outputs = generator(prompt, max_length=100, num_return_sequences=1)
+    outputs = get_generator()(""""+ "
+    ")}prompt, max_length=100, num_return_sequences=1)
     raw = outputs[0].get('generated_text', '')
     # extract answer after 'Answer:' if present
     answer = raw.split('Answer:')[-1].strip()
