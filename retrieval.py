@@ -1,17 +1,31 @@
 import os
 import pickle
-import faiss
 import numpy as np
+import faiss
 from openai import OpenAI
+from ingestion import build_faiss_index
+
+# File paths
+INDEX_FILE = "faiss_index.bin"
+CHUNKS_FILE = "chunks.pkl"
+
+# Ensure index & chunks exist, otherwise build
+if not os.path.exists(INDEX_FILE) or not os.path.exists(CHUNKS_FILE):
+    print("FAISS index or chunks not found—building now...")
+    build_faiss_index()
 
 # Load index and chunks
-index = faiss.read_index("faiss_index.bin")
-with open("chunks.pkl", "rb") as f:
+index = faiss.read_index(INDEX_FILE)
+with open(CHUNKS_FILE, "rb") as f:
     chunks = pickle.load(f)
 
-# Initialize OpenAI client (ensuring API key is read from environment)
-os.environ.setdefault('OPENAI_API_KEY', os.getenv('OPENAI_API_KEY', ''))
+# Initialize OpenAI client
+en_api_key = os.getenv('OPENAI_API_KEY')
+if not en_api_key:
+    raise ValueError("OPENAI_API_KEY environment variable is missing.")
+os.environ.setdefault('OPENAI_API_KEY', en_api_key)
 client = OpenAI()
+
 
 def retrieve(query: str, k: int = 3) -> list[str]:
     """
