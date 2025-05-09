@@ -5,7 +5,7 @@ from transformers import pipeline
 
 # Generative model
 LLM_MODEL = "google/flan-t5-small"
-# Initialize text-generation pipeline on 
+# Initialize text-generation pipeline on CPU
 generator = pipeline(
     "text2text-generation", model=LLM_MODEL, device=-1
 )
