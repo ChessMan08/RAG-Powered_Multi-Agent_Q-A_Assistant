@@ -1,37 +1,3 @@
-import os, logging
-
-os.environ["TRANSFORMERS_VERBOSITY"] = "error"
-os.environ["SENTENCE_TRANSFORMERS_VERBOSE"] = "0"
-logging.getLogger("transformers").setLevel(logging.ERROR)
-logging.getLogger("sentence_transformers").setLevel(logging.ERROR)
-logging.getLogger("torch").setLevel(logging.ERROR)
-
-import streamlit as st
-
-st.set_page_config(page_title="RAG‑Q&A", layout="centered")
-st.title("RAG‑Powered Q&A")
-
-if 'index_built' not in st.session_state:
-    st.session_state.index_built = False
-
-if not st.session_state.index_built:
-    if st.button("Build RAG Index (one‑time)"):
-        from ingestion import build_faiss_index
-        build_faiss_index()
-        st.session_state.index_built = True
-        st.success("Index built! Now you can ask questions below.")
-    st.stop()
-else:
-    from agent import handle_query
-    
-    query = st.text_input("Ask a question:")
-    if st.button("Submit") and query:
-        res = handle_query(query)
-        st.subheader("Answer")
-        st.write(res["answer"])
-        st.sidebar.header("Agent Log")
-        st.sidebar.write(res["log"])
-        
 from retrieval import retrieve
 from tools.calculator import calculate
 from tools.dictionary import define
