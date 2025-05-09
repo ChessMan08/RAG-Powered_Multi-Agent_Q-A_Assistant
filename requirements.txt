@@ -1,7 +1,6 @@
-faiss-cpu
 streamlit
-nltk
-langchain
+faiss-cpu
 sentence-transformers
 transformers
 torch
+nltk
