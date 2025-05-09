@@ -1,5 +1,7 @@
-openai
 faiss-cpu
 streamlit
 nltk
 langchain
+sentence-tranformers
+transformers
+torch
