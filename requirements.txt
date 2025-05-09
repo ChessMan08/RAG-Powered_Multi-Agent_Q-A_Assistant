@@ -2,6 +2,6 @@ faiss-cpu
 streamlit
 nltk
 langchain
-sentence-tranformers
+sentence-transformers
 transformers
 torch
