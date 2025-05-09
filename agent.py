@@ -19,11 +19,7 @@ def handle_query(query: str) -> dict:
 
     # RAG
     snippets = retrieve(query)
-    prompt = (
-        "Answer the question using only the context below.\n\n"
-        + "\n---\n".join(snippets)
-        + f"\n\nQuestion: {query}\nAnswer:"
-    )
+
     prompt = f"""\
 Answer the question below concisely using only the information in the context. \
 Do NOT repeat the question or list the context in your answer.
