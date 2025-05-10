@@ -1,7 +1,7 @@
 import os
 import streamlit as st
 
-# — Page config
+# Page config
 st.set_page_config(
     page_title="RAG‑Powered Multi‑Agent Q&A",
     layout="centered",
@@ -9,21 +9,20 @@ st.set_page_config(
 )
 st.title("RAG‑Powered Multi‑Agent Q&A")
 
-# — Ensure FAISS index exists
+# Ensure FAISS index exists
 from ingestion import build_faiss_index, INDEX_FILE, CHUNKS_FILE
 if not (os.path.exists(INDEX_FILE) and os.path.exists(CHUNKS_FILE)):
         build_faiss_index()
 
-# — Import the agent
+# Import the agent
 from agent import handle_query
 
-# — Session state for logs & history
+# Session state for logs & history
 if "logs" not in st.session_state:
     st.session_state.logs = []
 if "history" not in st.session_state:
-    st.session_state.history = []  # list of dicts {q, branch, snippets, answer}
+    st.session_state.history = [] 
 
-# — Input form at the bottom
 with st.form("question_form", clear_on_submit=True):
     batch = st.text_area(
         "Ask Questions",
@@ -32,7 +31,6 @@ with st.form("question_form", clear_on_submit=True):
     )
     submitted = st.form_submit_button("Submit")
 
-# — On submit, process questions
 if submitted and batch.strip():
     questions = [q.strip() for q in batch.splitlines() if q.strip()]
     for q in questions:
@@ -46,7 +44,7 @@ if submitted and batch.strip():
         })
 
 
-#— Display all results
+# Display all results
 if st.session_state.history:
     st.markdown("---")
     st.header("Batch Results")
@@ -59,7 +57,7 @@ if st.session_state.history:
         st.write("**Answer:**", entry["answer"])
         st.markdown("---")
 
-# — Sidebar: full agent log
+# Sidebar: full agent log
 with st.sidebar:
     st.header("Agent Log")
     for line in st.session_state.logs:
