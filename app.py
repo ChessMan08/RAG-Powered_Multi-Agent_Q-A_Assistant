@@ -1,5 +1,6 @@
 import os
 import streamlit as st
+import sys
 from streamlit.runtime.scriptrunner import RerunException
 from streamlit.runtime.state.session_state_proxy import SessionState
 
@@ -25,11 +26,17 @@ if "logs" not in st.session_state:
 if "history" not in st.session_state:
     st.session_state.history = []  # list of dicts {q, branch, snippets, answer}
 
-# — Input clearing logic (safe rerun)
+# — Check if rerun was scheduled
+if st.session_state.get("trigger_rerun", False):
+    st.session_state["trigger_rerun"] = False
+    st.rerun()
+
+# — Input clearing logic
 if st.session_state.get("clear_input"):
     st.session_state["batch_input"] = ""
     st.session_state["clear_input"] = False
-    raise RerunException(st.script_run_ctx.get_script_run_ctx())
+    st.session_state["trigger_rerun"] = True
+    st.stop()
 
 # — Input area BELOW the results, in a form
 with st.form("question_form"):
@@ -40,7 +47,6 @@ with st.form("question_form"):
     )
     submitted = st.form_submit_button("Submit")
 
-# — On form submit
 if submitted and batch.strip():
     questions = [q.strip() for q in batch.splitlines() if q.strip()]
     for q in questions:
@@ -52,11 +58,9 @@ if submitted and batch.strip():
             "snippets": res["snippets"],
             "answer": res["answer"]
         })
-    # Mark input for clearing
+    # mark input for clearing
     st.session_state["clear_input"] = True
-    raise RerunException(st.script_run_ctx.get_script_run_ctx())
-
-
+    st.stop()
 
 
 # — Sidebar: full agent log
