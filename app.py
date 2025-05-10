@@ -7,14 +7,12 @@ st.set_page_config(
     layout="centered",
     initial_sidebar_state="expanded"
 )
-st.title("RAG‑Powered Multi‑Agent Q&A — Batch Mode")
+st.title("RAG‑Powered Multi‑Agent Q&A")
 
 # — Ensure FAISS index exists
 from ingestion import build_faiss_index, INDEX_FILE, CHUNKS_FILE
 if not (os.path.exists(INDEX_FILE) and os.path.exists(CHUNKS_FILE)):
-    with st.spinner("Building RAG index… this happens only once"):
         build_faiss_index()
-    st.success("Index built — you can now ask questions!")
 
 # — Import the agent
 from agent import handle_query
@@ -41,11 +39,11 @@ if st.session_state.history:
 # — Then show the input area at the bottom, with a key so we can clear it
 batch = st.text_area(
     "Enter one or more questions (each on its own line):", 
-    height=150,
+    height=68,
     key="batch_input"
 )
 
-if st.button("Submit All") and batch.strip():
+if st.button("Submit") and batch.strip():
     questions = [q.strip() for q in batch.splitlines() if q.strip()]
     for q in questions:
         res = handle_query(q)
