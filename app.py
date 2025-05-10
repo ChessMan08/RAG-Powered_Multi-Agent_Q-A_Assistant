@@ -46,7 +46,7 @@ if st.button("Submit") and query:
     res = handle_query(query)
 
     # record log and history
-    st.session_state.logs.append(f"Q: {query} | {res['log']}")
+    st.session_state.logs.append(f"Q: {query}")
     st.session_state.history.append({"q": query, "a": res["answer"]})
 
 # ——————————————————————————
