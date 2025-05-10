@@ -18,9 +18,7 @@ st.title("RAG‑Powered Multi‑Agent Q&A")
 from ingestion import build_faiss_index, INDEX_FILE, CHUNKS_FILE
 
 if not (os.path.exists(INDEX_FILE) and os.path.exists(CHUNKS_FILE)):
-    with st.spinner("Building RAG index… this happens only once"):
         build_faiss_index()
-    st.success("Index built — you can now ask questions!")
 
 # ——————————————————————————
 # Import the agent after index exists
