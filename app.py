@@ -38,7 +38,7 @@ if st.session_state.history:
 
 # — Then show the input area at the bottom, with a key so we can clear it
 batch = st.text_area(
-    "Enter one or more questions (each on its own line):", 
+    "Ask Questions", 
     height=68,
     key="batch_input"
 )
