@@ -17,19 +17,15 @@ def handle_query(query: str) -> dict:
         ans = define(term)
         return {"branch": "dictionary", "snippets": [], "answer": ans, "log": f"Defined {term} → {ans}"}
 
-    # RAG
     snippets = retrieve(query)
 
-    prompt = f"""\
-Answer the question below concisely using only the information in the context. \
-Do NOT repeat the question or list the context in your answer.
-
-Context:
-{"\n".join(snippets)}
-
-Question: {query}
-Answer:"""
-
-    gen = pipeline("text2text-generation", model=LLM_MODEL, device=-1, framework="pt")
-    out = gen(prompt, max_length=200, num_return_sequences=1)[0]["generated_text"].strip()
-    return {"branch": "rag", "snippets": snippets, "answer": out, "log": f"RAG retrieved {len(snippets)} chunks"}
+    from transformers import pipeline
+    qa = pipeline(
+        "question-answering",
+        model="distilbert-base-cased-distilled-squad",
+        device=-1
+    )
+    context = "\n".join(snippets)
+    out = qa(question=query, context=context)
+    ans = out["answer"].strip()
+    return {"branch": "rag", "snippets": snippets, "answer": ans, "log": f"RAG retrieved {len(snippets)} chunks"}
