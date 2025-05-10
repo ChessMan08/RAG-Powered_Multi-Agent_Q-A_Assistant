@@ -59,7 +59,7 @@ if st.session_state.history:
     for entry in st.session_state.history:
         st.subheader(f"Q: {entry['q']}")
         st.write("**Branch:**", entry["branch"].upper())
-       if entry["branch"] == "rag" and entry["snippets"]:
+        if entry["branch"] == "rag" and entry["snippets"]:
             st.write("**Source Snippet:**")
             st.markdown(f"> {entry['snippets'][0]}")
         st.write("**Answer:**", entry["answer"])
