@@ -32,7 +32,7 @@ if st.session_state.get("clear_input", False):
 # — Multi‑line input area for batch questions
 batch = st.text_area(
     "Ask Questions", 
-    height=68
+    height=68,
     key="batch_input"
 )
 
