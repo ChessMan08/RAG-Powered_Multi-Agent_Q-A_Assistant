@@ -51,6 +51,7 @@ def handle_query(query: str) -> dict:
 
     best_score = -1.0
     best_answer = None
+    best_snippet = None
 
     # For each chunk, split into QA pairs and compare embeddings
     for chunk in snippets:
@@ -69,6 +70,7 @@ def handle_query(query: str) -> dict:
             if sim > best_score and ans_text:
                 best_score = sim
                 best_answer = ans_text
+                best_snippet = chunk
 
     # Fallback: if no good match or score below threshold
     if not best_answer or best_score < 0.2:
@@ -82,7 +84,7 @@ def handle_query(query: str) -> dict:
 
     return {
         "branch": "rag",
-        "snippets": snippets,
+        "snippets": [best_snippet] if best_snippet else [],
         "answer": best_answer,
         "log": log_entry
     }
