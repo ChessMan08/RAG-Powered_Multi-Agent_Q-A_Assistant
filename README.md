@@ -11,3 +11,5 @@ If a query contains the word `“calculate”`, the app routes it to a `simple c
 ## Interface
 
 The interface shows the question, which agent branch was taken, the answer, and (for RAG queries) a button to reveal the retrieved context snippets.
+
+![App Demo](images/interface.png)
