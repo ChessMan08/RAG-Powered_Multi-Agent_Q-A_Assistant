@@ -1,4 +1,5 @@
-Product: Acme Smart Speaker
+Q: All specifications of speaker?
+A: Product: Acme Smart Speaker
 Model: AS‑100  
 Dimensions: 6.5" × 4" × 4"  
 Weight: 1.2 lbs  
