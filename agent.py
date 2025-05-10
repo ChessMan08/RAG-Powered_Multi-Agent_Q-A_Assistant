@@ -12,26 +12,38 @@ embedder = SentenceTransformer(EMBED_MODEL)
 
 def handle_query(query: str) -> dict:
     """
-    - “calculate” → calculator
-    - “define” → dictionary
-    - otherwise RAG: split chunks into Q/A pairs, embed each question segment,
-      pick the answer whose question embedding is closest to the query embedding.
+    Route the query to calculator, dictionary, or RAG‑semantic‑match branch.
+    Returns a dict with:
+      - branch: which tool was used
+      - snippets: list of retrieved chunks
+      - answer: the extracted answer or a fallback message
+      - log: a short description of the action
     """
     q = query.lower().strip()
 
-    # Calculator
+    # 1) Calculator branch
     if "calculate" in q:
         expr = q.replace("calculate", "").strip()
         ans = calculate(expr)
-        return {"branch":"calculator","snippets":[],"answer":ans,"log":f"Calculated '{expr}'→{ans}"}
+        return {
+            "branch": "calculator",
+            "snippets": [],
+            "answer": ans,
+            "log": f"Calculated '{expr}' → {ans}"
+        }
 
-    # Dictionary
+    # 2) Dictionary branch
     if "define" in q:
         term = q.replace("define", "").strip()
         ans = define(term)
-        return {"branch":"dictionary","snippets":[],"answer":ans,"log":f"Defined '{term}'→{ans}"}
+        return {
+            "branch": "dictionary",
+            "snippets": [],
+            "answer": ans,
+            "log": f"Defined '{term}' → {ans}"
+        }
 
-    # RAG‑semantic‑match branch
+    # 3) RAG‑semantic‑match branch
     snippets = retrieve(query, k=3)
 
     # Embed the user query once
@@ -42,35 +54,35 @@ def handle_query(query: str) -> dict:
 
     # For each chunk, split into QA pairs and compare embeddings
     for chunk in snippets:
-        # find all Q:/A: occurrences
         parts = chunk.split("Q:")
         for seg in parts:
             if "A:" not in seg:
                 continue
-            # separate question vs answer
             ques_text, ans_text = seg.split("A:", 1)
             ques_text = ques_text.strip()
-            ans_text = ans_text.strip().split("Q:",1)[0].strip()
+            ans_text = ans_text.strip().split("Q:", 1)[0].strip()
 
             # embed this question segment
             seg_vec = embedder.encode([ques_text], convert_to_numpy=True).astype("float32")
             # cosine similarity
-            sim = float(np.dot(q_vec, seg_vec.T) / (np.linalg.norm(q_vec)*np.linalg.norm(seg_vec)))
-            if sim > best_score:
+            sim = float(np.dot(q_vec, seg_vec.T) / (np.linalg.norm(q_vec) * np.linalg.norm(seg_vec)))
+            if sim > best_score and ans_text:
                 best_score = sim
                 best_answer = ans_text
 
-    # fallback: first chunk’s whole answer
-    if not best_answer:
-        top = snippets[0]
-        if "A:" in top:
-            best_answer = top.split("A:",1)[1].split("Q:",1)[0].strip()
-        else:
-            best_answer = top.strip()
+    # Fallback: if no good match or score below threshold
+    if not best_answer or best_score < 0.2:
+        best_answer = (
+            "I’m sorry, I don’t have enough information to answer that. "
+            "Please try asking in a different way or about another topic."
+        )
+        log_entry = "RAG‑semantic‑match found no suitable answer"
+    else:
+        log_entry = f"RAG‑semantic‑match picked answer with score {best_score:.3f}"
 
     return {
         "branch": "rag",
         "snippets": snippets,
         "answer": best_answer,
-        "log": f"RAG-sematic-match picked answer with score {best_score:.3f}"
+        "log": log_entry
     }
