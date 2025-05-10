@@ -20,23 +20,23 @@ _Figure: Example Streamlit interface. The user’s query is submitted in the rig
 
 ## Architecture
 
-- **Data Ingestion:** The `ingestion.py` script reads all text files in `docs/`, splits them into smaller chunks, and computes vector embeddings using SentenceTransformers (model all-MiniLM-L6-v2). These vectors are stored in a FAISS index for fast similarity search. (Chunking the documents into snippets ensures that retrieval is focused and precise).
+- **Data Ingestion:** The `ingestion.py` script reads all text files in `docs/`, splits them into smaller chunks, and computes vector embeddings using SentenceTransformers (model all-MiniLM-L6-v2). These vectors are stored in a FAISS index for fast similarity search.
   
-- **Query Routing / Agents:** When a user submits a question, the app checks for keywords. If “calculate” appears, it runs a Python calculator routine; if “define” appears, it uses NLTK’s WordNet to look up definitions. Otherwise, it enters the RAG pipeline. Each decision is logged (e.g. “Calculator branch”, “Dictionary branch”, or “RAG branch”) in the sidebar. This simple keyword-based routing implements an agentic workflow, where the system decides which tool to use for each query.
+- **Query Routing / Agents:** When a user submits a question, the app checks for keywords. If “calculate” appears, it runs a Python calculator routine; if “define” appears, it uses NLTK’s WordNet to look up definitions. Otherwise, it enters the RAG pipeline. Each decision is logged (e.g. “Calculator branch”, “Dictionary branch”, or “RAG branch”) in the sidebar.
   
-- **Retrieval (RAG branch):** For RAG queries, the app embeds the user query with the same SentenceTransformer model and uses FAISS to retrieve the top-N most similar document snippets (e.g. top 3). This implements the core RAG idea: _“the Retriever finds the most relevant documents, injects them into the prompt, and passes them on to the generative model”._
+- **Retrieval (RAG branch):** For RAG queries, the app embeds the user query with the same SentenceTransformer model and uses FAISS to retrieve the top-N most similar document snippets (e.g. top 3).
   
-- **Generation:** The retrieved snippets are combined with the user’s query to form a prompt for the language model. We use Google’s FLAN-T5-small (a 80M-parameter T5 variant) to generate the answer. FLAN-T5-small is a fully open-source LLM under the Apache 2.0 license, so it can be run locally without any API calls or keys.
+- **Generation:** The retrieved snippets are combined with the user’s query to form a prompt for the language model. We use Google’s FLAN-T5-small (a 80M-parameter T5 variant) to generate the answer.
   
-- **Interface (Streamlit):** A Streamlit app provides the user interface. There is a text box for the user to input questions, a Submit button, and a display area for the answer. The sidebar shows a running “Agent Log” of each query and which branch was used. For RAG answers, a “Show Retrieved Context Snippets” button lets the user view the exact chunks that were retrieved from the documents.
+- **Interface (Streamlit):** A Streamlit app provides the user interface. There is a text box for the user to input questions, a Submit button, and a display area for the answer. The sidebar shows a running “Agent Log” of each query and which branch was used.
 
 ## Key Design Choices
 
-- **Open-Source Components:** We chose only free, open models and tools to avoid any external API requirements. The SentenceTransformers model (all-MiniLM-L6-v2) and Flan-T5-small are both Apache 2.0 licensed. The FAISS library (MIT license) is used for vector search. There are no proprietary APIs or keys needed.
+- **Open-Source Components:** We chose only free, open models and tools to avoid any external API requirements. The SentenceTransformers model (all-MiniLM-L6-v2) and Flan-T5-small are both Apache 2.0 licensed. The FAISS library (MIT license) is used for vector search.
   
-- **Agent Separation:** The logic for each tool (calculator, dictionary, RAG) is kept modular. Simple keyword checks dispatch the query to one branch. This separation makes the workflow transparent (each decision is logged) and easy to extend with new tools if desired. This follows the idea of an agentic RAG architecture where an “agent” routes queries to different tools.
+- **Agent Separation:** The logic for each tool (calculator, dictionary, RAG) is kept modular. Simple keyword checks dispatch the query to one branch. This separation makes the workflow transparent (each decision is logged) and easy to extend with new tools if desired.
   
-- **Snippet-Level Retrieval:** Documents are chunked into small passages rather than treating each doc as a whole. This ensures that retrieved context is precise and relevant. It also keeps the prompt shorter so the LLM can process more context. The chunks are embedded and indexed offline, so at query time retrieval is fast. This design reflects the standard RAG pipeline: _indexing → retrieval → generation_.
+- **Snippet-Level Retrieval:** Documents are chunked into small passages rather than treating each doc as a whole. This ensures that retrieved context is precise and relevant. This design reflects the standard RAG pipeline: _indexing → retrieval → generation_.
 
 ## Setup Instructions
 
@@ -76,7 +76,7 @@ You can deploy this app either locally or on Streamlit Cloud:
 
 - **Local Deployment:** Follow the setup steps above. Make sure to keep the `docs/` folder and index files accessible. The app will run on `localhost:8501` by default.
   
-- **Streamlit Cloud:** Push the code (including `docs/` and `ingestion.py`) to a GitHub repo. Then log in to Streamlit Cloud, create a new app, and connect to your GitHub repo. Specify the main script (e.g.         `app.py`) in the Streamlit Cloud settings. Because the app uses only local models, you won’t need any secrets or API keys for deployment. The FAISS index can be rebuilt on the cloud by running `ingestion.py` in   the init script or the app’s code (you may want to ensure this happens once). Streamlit Cloud will handle the Python environment based on `requirements.txt`.
+- **Streamlit Cloud:** Push the code (including `docs/` and `ingestion.py`) to a GitHub repo. Then log in to Streamlit Cloud, create a new app, and connect to your GitHub repo. Specify the main script (e.g. `app.py`) in the Streamlit Cloud settings. The FAISS index can be rebuilt on the cloud by running `ingestion.py` in   the init script or the app’s code. Streamlit Cloud will handle the Python environment based on `requirements.txt`.
 
 ## Model Licenses
 
