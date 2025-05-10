@@ -1,17 +1,15 @@
-# agent.py
-
 from retrieval import retrieve
 from tools.calculator import calculate
 from tools.dictionary import define
 
 def handle_query(query: str) -> dict:
     """
-    Route the query to calculator, dictionary, or RAG‑QA pipeline.
+    Route the query to calculator, dictionary, or RAG (manual scan) branch.
     Returns a dict with:
-      - branch: which tool ran
-      - snippets: the retrieved text chunks
-      - answer: the final answer string
-      - log: a short description of what happened
+      - branch: which tool was used
+      - snippets: list of retrieved chunks
+      - answer: the extracted answer
+      - log: a short description of the action
     """
     q = query.lower().strip()
 
@@ -37,28 +35,39 @@ def handle_query(query: str) -> dict:
             "log": f"Defined '{term}' → {ans}"
         }
 
-    # 3) RAG‑QA branch
-    #    Retrieve top‑3 relevant chunks, then run QA to extract the precise answer.
+    # 3) RAG branch (Option 1: manual scan across snippets)
     snippets = retrieve(query, k=3)
+    ans = None
 
-    # Combine all snippets into one context string
-    context = "\n\n".join(snippets)
+    # Scan each snippet for the matching Q:/A: pair
+    for chunk in snippets:
+        # Each chunk may contain multiple "Q: ... A: ..." pairs
+        parts = chunk.split("Q:")
+        for seg in parts:
+            if not seg.strip():
+                continue
+            # If this segment's question matches the user query
+            if query.lower().strip("?") in seg.lower():
+                # Extract everything after "A:" up to the next "Q:"
+                if "A:" in seg:
+                    ans = seg.split("A:", 1)[1].split("Q:", 1)[0].strip()
+                else:
+                    ans = seg.strip()
+                break
+        if ans:
+            break
 
-    # Lazy‑import the QA pipeline
-    from transformers import pipeline
-    qa = pipeline(
-        "question-answering",
-        model="distilbert-base-cased-distilled-squad",
-        device=-1  # CPU; change to 0 for GPU
-    )
-
-    # Run the QA model
-    result = qa(question=query, context=context)
-    ans = result.get("answer", "").strip()
+    # Fallback: if no matching segment found, return first chunk's answer
+    if not ans:
+        top = snippets[0]
+        if "A:" in top:
+            ans = top.split("A:", 1)[1].split("Q:", 1)[0].strip()
+        else:
+            ans = top.strip()
 
     return {
         "branch": "rag",
         "snippets": snippets,
         "answer": ans,
-        "log": f"RAG‑QA extracted answer (score={result.get('score', 0):.2f})"
+        "log": f"RAG retrieved {len(snippets)} chunks"
     }
