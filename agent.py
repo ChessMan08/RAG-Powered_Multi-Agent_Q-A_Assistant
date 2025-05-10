@@ -1,42 +1,68 @@
-# agent.py
 from retrieval import retrieve
 from tools.calculator import calculate
 from tools.dictionary import define
 
 def handle_query(query: str) -> dict:
     """
-    Route to calculator, dictionary, or RAG. 
-    RAG: return the full answer verbatim from the top chunk.
+    Route the query to calculator, dictionary, or RAG.
+    Returns:
+      - branch: which tool was used
+      - snippets: list of retrieved chunks
+      - answer: final answer text
+      - log: a short log entry
     """
-    q = query.lower()
+    q = query.lower().strip()
 
-    # calculator
+    # Calculator branch
     if "calculate" in q:
         expr = q.replace("calculate", "").strip()
         ans = calculate(expr)
-        return {"branch":"calculator","snippets":[],"answer":ans,"log":f"Calculated {expr}→{ans}"}
+        return {
+            "branch": "calculator",
+            "snippets": [],
+            "answer": ans,
+            "log": f"Calculated '{expr}' → {ans}"
+        }
 
-    # dictionary
+    # Dictionary branch
     if "define" in q:
         term = q.replace("define", "").strip()
         ans = define(term)
-        return {"branch":"dictionary","snippets":[],"answer":ans,"log":f"Defined {term}→{ans}"}
+        return {
+            "branch": "dictionary",
+            "snippets": [],
+            "answer": ans,
+            "log": f"Defined '{term}' → {ans}"
+        }
 
-    # RAG branch: pull chunks
+    # RAG branch
     snippets = retrieve(query)
 
-    # take the first chunk that contains an "A:" and return everything after "A:"
+    # Extract the exact A:… for this question from the top chunk
     top = snippets[0]
-    if "A:" in top:
-        # split on the first "A:" and strip
-        ans = top.split("A:",1)[1].strip()
-    else:
-        # fallback: return the entire chunk
-        ans = top.strip()
+    ans = None
+    for seg in top.split("Q:"):
+        if not seg.strip():
+            continue
+        # match this segment's question
+        if query.lower().strip("?") in seg.lower():
+            if "A:" in seg:
+                # take text after A: up to next Q:
+                ans = seg.split("A:", 1)[1].split("Q:", 1)[0].strip()
+            else:
+                ans = seg.strip()
+            break
+
+    # fallback to first answer in chunk
+    if ans is None:
+        if "A:" in top:
+            ans = top.split("A:", 1)[1].split("Q:", 1)[0].strip()
+        else:
+            ans = top.strip()
 
     return {
-      "branch": "rag",
-      "snippets": snippets,
-      "answer": ans,
-      "log": f"RAG retrieved {len(snippets)} chunks"
+        "branch": "rag",
+        "snippets": snippets,
+        "answer": ans,
+        "log": f"RAG retrieved {len(snippets)} chunks"
     }
