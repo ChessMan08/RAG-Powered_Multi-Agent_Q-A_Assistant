@@ -33,6 +33,7 @@ if st.session_state.get("clear_input", False):
 batch = st.text_area(
     "Ask Questions", 
     height=68
+    key="batch_input"
 )
 
 if st.button("Submit") and batch.strip():
