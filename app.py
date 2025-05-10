@@ -51,10 +51,9 @@ if st.session_state.history:
     for entry in st.session_state.history:
         st.subheader(f"Q: {entry['q']}")
         st.write("**Branch:**", entry["branch"].upper())
-        if entry["branch"] == "rag":
-            st.write("**Retrieved Context:**")
-            for i, snip in enumerate(entry["snippets"], 1):
-                st.markdown(f"> Snippet {i}: {snip}")
+        if entry["branch"] == "rag" and entry["snippets"]:
+            st.write("**Source Snippet:**")
+            st.markdown(f"> {entry['snippets'][0]}")
         st.write("**Answer:**", entry["answer"])
         st.markdown("---")
 
