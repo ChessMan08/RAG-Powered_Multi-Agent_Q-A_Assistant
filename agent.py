@@ -1,19 +1,18 @@
+# agent.py
+
 from retrieval import retrieve
 from tools.calculator import calculate
 from tools.dictionary import define
 
 def handle_query(query: str) -> dict:
     """
-    Route the query to calculator, dictionary, or RAG (manual scan) branch.
-    Returns a dict with:
-      - branch: which tool was used
-      - snippets: list of retrieved chunks
-      - answer: the extracted answer
-      - log: a short description of the action
+    Routes to calculator, dictionary, or RAG‑QA-per‑snippet.
+    For RAG: runs a QA model on each snippet, picks the highest‑score answer.
+    Returns { branch, snippets, answer, log }.
     """
     q = query.lower().strip()
 
-    # 1) Calculator branch
+    # Calculator
     if "calculate" in q:
         expr = q.replace("calculate", "").strip()
         ans = calculate(expr)
@@ -24,7 +23,7 @@ def handle_query(query: str) -> dict:
             "log": f"Calculated '{expr}' → {ans}"
         }
 
-    # 2) Dictionary branch
+    # Dictionary
     if "define" in q:
         term = q.replace("define", "").strip()
         ans = define(term)
@@ -35,39 +34,56 @@ def handle_query(query: str) -> dict:
             "log": f"Defined '{term}' → {ans}"
         }
 
-    # 3) RAG branch (Option 1: manual scan across snippets)
+    # RAG‑QA-per‑snippet
     snippets = retrieve(query, k=3)
-    ans = None
 
-    # Scan each snippet for the matching Q:/A: pair
-    for chunk in snippets:
-        # Each chunk may contain multiple "Q: ... A: ..." pairs
-        parts = chunk.split("Q:")
-        for seg in parts:
-            if not seg.strip():
-                continue
-            # If this segment's question matches the user query
-            if query.lower().strip("?") in seg.lower():
-                # Extract everything after "A:" up to the next "Q:"
-                if "A:" in seg:
-                    ans = seg.split("A:", 1)[1].split("Q:", 1)[0].strip()
-                else:
-                    ans = seg.strip()
+    # Lazy‑load QA pipeline
+    from transformers import pipeline
+    qa = pipeline(
+        "question-answering",
+        model="distilbert-base-cased-distilled-squad",
+        device=-1
+    )
+
+    best_ans = None
+    best_score = -1.0
+
+    # Run QA on each chunk, pick highest score
+    for i, chunk in enumerate(snippets):
+        try:
+            out = qa(question=query, context=chunk)
+            ans = out.get("answer", "").strip()
+            score = float(out.get("score", 0))
+            if score > best_score and ans:
+                best_score = score
+                best_ans = ans
+        except Exception:
+            continue
+
+    # Fallback: if QA failed everywhere, fall back to manual scan Option 1
+    if not best_ans:
+        for chunk in snippets:
+            for seg in chunk.split("Q:"):
+                if query.lower().strip("?") in seg.lower():
+                    if "A:" in seg:
+                        best_ans = seg.split("A:",1)[1].split("Q:",1)[0].strip()
+                    else:
+                        best_ans = seg.strip()
+                    break
+            if best_ans:
                 break
-        if ans:
-            break
 
-    # Fallback: if no matching segment found, return first chunk's answer
-    if not ans:
-        top = snippets[0]
-        if "A:" in top:
-            ans = top.split("A:", 1)[1].split("Q:", 1)[0].strip()
+    # Last fallback: entire first chunk
+    if not best_ans:
+        first = snippets[0]
+        if "A:" in first:
+            best_ans = first.split("A:",1)[1].split("Q:",1)[0].strip()
         else:
-            ans = top.strip()
+            best_ans = first.strip()
 
     return {
         "branch": "rag",
         "snippets": snippets,
-        "answer": ans,
-        "log": f"RAG retrieved {len(snippets)} chunks"
+        "answer": best_ans,
+        "log": f"RAG‑QA checked {len(snippets)} chunks, best_score={best_score:.2f}"
     }
