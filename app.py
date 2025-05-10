@@ -29,27 +29,27 @@ if st.session_state.get("clear_input", False):
     st.session_state["clear_input"] = False
     st.rerun()
 
-# — Multi‑line input area for batch questions
-batch = st.text_area(
-    "Ask Questions", 
-    height=68,
-    key="batch_input"
-)
+# — Input area in a form to enable immediate clearing after submission
+with st.form("question_form", clear_on_submit=True):
+    batch = st.text_area(
+        "Ask Questions",
+        height=68,
+        key="batch_input"
+    )
+    submitted = st.form_submit_button("Submit")
 
-if st.button("Submit") and batch.strip():
-    # split lines, filter out empty
+if submitted and batch.strip():
     questions = [q.strip() for q in batch.splitlines() if q.strip()]
-    # process each
     for q in questions:
         res = handle_query(q)
-        # record in session history & logs
         st.session_state.logs.append(f"Q: {q} | {res['log']}")
         st.session_state.history.append({
-            "q": q, 
-            "branch": res["branch"], 
-            "snippets": res["snippets"], 
+            "q": q,
+            "branch": res["branch"],
+            "snippets": res["snippets"],
             "answer": res["answer"]
         })
+
     # schedule the input box to be cleared on next run
     st.session_state["clear_input"] = True
 
