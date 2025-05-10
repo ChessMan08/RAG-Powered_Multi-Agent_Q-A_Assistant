@@ -4,12 +4,12 @@ from retrieval import retrieve
 from tools.calculator import calculate
 from tools.dictionary import define
 
-from transformers import pipeline # added
+from transformers import pipeline 
 
 from sentence_transformers import SentenceTransformer
 import numpy as np
 
-LLM_MODEL = "google/flan-t5-small" # added
+LLM_MODEL = "google/flan-t5-small" 
 
 _generator = None
 def get_generator():
