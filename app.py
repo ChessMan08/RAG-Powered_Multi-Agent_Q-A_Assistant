@@ -1,5 +1,7 @@
 import os
 import streamlit as st
+from streamlit.runtime.scriptrunner import RerunException
+from streamlit.runtime.state.session_state_proxy import SessionState
 
 # — Page config
 st.set_page_config(
@@ -23,11 +25,11 @@ if "logs" not in st.session_state:
 if "history" not in st.session_state:
     st.session_state.history = []  # list of dicts {q, branch, snippets, answer}
 
-# Check if we requested an input reset
+# — Input clearing logic (safe rerun)
 if st.session_state.get("clear_input"):
     st.session_state["batch_input"] = ""
     st.session_state["clear_input"] = False
-    st.experimental_rerun()
+    raise RerunException(st.script_run_ctx.get_script_run_ctx())
 
 # — Input area BELOW the results, in a form
 with st.form("question_form"):
@@ -50,9 +52,10 @@ if submitted and batch.strip():
             "snippets": res["snippets"],
             "answer": res["answer"]
         })
-    # Schedule input reset
+    # Mark input for clearing
     st.session_state["clear_input"] = True
-    st.experimental_rerun()
+    raise RerunException(st.script_run_ctx.get_script_run_ctx())
+
 
 
 
