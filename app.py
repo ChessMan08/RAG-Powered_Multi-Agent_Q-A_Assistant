@@ -52,7 +52,7 @@ if st.button("Submit") and batch.strip():
     # schedule the input box to be cleared on next run
     st.session_state["clear_input"] = True
 
- — Display all results
+#— Display all results
 if st.session_state.history:
     st.markdown("---")
     st.header("Batch Results")
