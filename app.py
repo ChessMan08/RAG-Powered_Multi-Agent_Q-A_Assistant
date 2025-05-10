@@ -23,13 +23,7 @@ if "logs" not in st.session_state:
 if "history" not in st.session_state:
     st.session_state.history = []  # list of dicts {q, branch, snippets, answer}
 
-# — If requested, clear the input box and rerun before rendering widgets
-if st.session_state.get("clear_input", False):
-    st.session_state["batch_input"] = ""
-    st.session_state["clear_input"] = False
-    st.rerun()
-
-# — Input area in a form to enable immediate clearing after submission
+# — Input form at the bottom
 with st.form("question_form", clear_on_submit=True):
     batch = st.text_area(
         "Ask Questions",
@@ -38,6 +32,7 @@ with st.form("question_form", clear_on_submit=True):
     )
     submitted = st.form_submit_button("Submit")
 
+# — On submit, process questions
 if submitted and batch.strip():
     questions = [q.strip() for q in batch.splitlines() if q.strip()]
     for q in questions:
@@ -50,8 +45,6 @@ if submitted and batch.strip():
             "answer": res["answer"]
         })
 
-    # schedule the input box to be cleared on next run
-    st.session_state["clear_input"] = True
 
 #— Display all results
 if st.session_state.history:
