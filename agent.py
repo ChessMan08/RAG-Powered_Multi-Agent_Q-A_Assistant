@@ -55,7 +55,7 @@ def handle_query(query: str) -> dict:
     context = "\n\n".join(snippets)
 
     prompt = f"""Answer the question below using only the information in the context.  
-If the context doesn’t contain the answer, say “I’m sorry, I don’t know.”
+If the context doesn’t contain the answer, say “"I’m sorry, I don’t have enough information to answer that. Please try asking in a different way or about another topic.”
 
 Context:
 {context}
