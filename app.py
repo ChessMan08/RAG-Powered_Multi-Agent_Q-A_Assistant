@@ -7,7 +7,7 @@ st.set_page_config(
     layout="centered",
     initial_sidebar_state="expanded"
 )
-st.title("RAG‑Powered Multi‑Agent Q&A")
+st.title("RAG‑Powered Multi‑Agent Q&A — Batch Mode")
 
 # — Ensure FAISS index exists
 from ingestion import build_faiss_index, INDEX_FILE, CHUNKS_FILE
@@ -19,37 +19,49 @@ if not (os.path.exists(INDEX_FILE) and os.path.exists(CHUNKS_FILE)):
 # — Import the agent
 from agent import handle_query
 
-# — Session state
+# — Session state for logs & history
 if "logs" not in st.session_state:
     st.session_state.logs = []
 if "history" not in st.session_state:
-    st.session_state.history = []
+    st.session_state.history = []  # list of dicts {q, branch, snippets, answer}
 
-# — Input
-query = st.text_input("Ask a question:")
-if st.button("Submit") and query:
-    res = handle_query(query)
-    # record
-    st.session_state.logs.append(f"Q: {query} | {res['log']}")
-    st.session_state.history.append({"q": query, **res})
+# — Multi‑line input area for batch questions
+batch = st.text_area(
+    "Enter one or more questions (each on its own line):", 
+    height=150
+)
 
-# — Show latest result
+if st.button("Submit All") and batch.strip():
+    # split lines, filter out empty
+    questions = [q.strip() for q in batch.splitlines() if q.strip()]
+    # process each
+    for q in questions:
+        res = handle_query(q)
+        # record in session history & logs
+        st.session_state.logs.append(f"Q: {q} | {res['log']}")
+        st.session_state.history.append({
+            "q": q, 
+            "branch": res["branch"], 
+            "snippets": res["snippets"], 
+            "answer": res["answer"]
+        })
+
+# — Display all results
 if st.session_state.history:
-    last = st.session_state.history[-1]
-    st.subheader("Tool / Agent Branch")
-    st.write(last["branch"].upper())
-
-    if last["branch"] == "rag":
-        st.subheader("Retrieved Context Snippets")
-        for i, snip in enumerate(last["snippets"], start=1):
-            st.markdown(f"**Snippet {i}:**")
-            st.write(snip)
-
-    st.subheader("Answer")
-    st.write(last["answer"])
+    st.markdown("---")
+    st.header("Batch Results")
+    for entry in st.session_state.history:
+        st.subheader(f"Q: {entry['q']}")
+        st.write("**Branch:**", entry["branch"].upper())
+        if entry["branch"] == "rag":
+            st.write("**Retrieved Context:**")
+            for i, snip in enumerate(entry["snippets"], 1):
+                st.markdown(f"> Snippet {i}: {snip}")
+        st.write("**Answer:**", entry["answer"])
+        st.markdown("---")
 
 # — Sidebar: full agent log
 with st.sidebar:
     st.header("Agent Log")
-    for entry in st.session_state.logs:
-        st.write(entry)
+    for line in st.session_state.logs:
+        st.write(line)
