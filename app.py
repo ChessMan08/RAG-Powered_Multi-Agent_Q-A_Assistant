@@ -21,10 +21,32 @@ from agent import handle_query
 if "logs" not in st.session_state:
     st.session_state.logs = []
 if "history" not in st.session_state:
-    st.session_state.history = []
+    st.session_state.history = []  # list of dicts {q, branch, snippets, answer}
 
-# — Display all past results first
+# — Multi‑line input area for batch questions
+batch = st.text_area(
+    "Ask Questions", 
+    height=68
+)
+
+if st.button("Submit") and batch.strip():
+    # split lines, filter out empty
+    questions = [q.strip() for q in batch.splitlines() if q.strip()]
+    # process each
+    for q in questions:
+        res = handle_query(q)
+        # record in session history & logs
+        st.session_state.logs.append(f"Q: {q} | {res['log']}")
+        st.session_state.history.append({
+            "q": q, 
+            "branch": res["branch"], 
+            "snippets": res["snippets"], 
+            "answer": res["answer"]
+        })
+
+# — Display all results
 if st.session_state.history:
+    st.markdown("---")
     st.header("Batch Results")
     for entry in st.session_state.history:
         st.subheader(f"Q: {entry['q']}")
@@ -35,27 +57,6 @@ if st.session_state.history:
                 st.markdown(f"> Snippet {i}: {snip}")
         st.write("**Answer:**", entry["answer"])
         st.markdown("---")
-
-# — Then show the input area at the bottom, with a key so we can clear it
-batch = st.text_area(
-    "Ask Questions", 
-    height=68,
-    key="batch_input"
-)
-
-if st.button("Submit") and batch.strip():
-    questions = [q.strip() for q in batch.splitlines() if q.strip()]
-    for q in questions:
-        res = handle_query(q)
-        st.session_state.logs.append(f"Q: {q} | {res['log']}")
-        st.session_state.history.append({
-            "q": q,
-            "branch": res["branch"],
-            "snippets": res["snippets"],
-            "answer": res["answer"],
-        })
-    # clear the text area by resetting its session state
-    st.session_state.batch_input = ""
 
 # — Sidebar: full agent log
 with st.sidebar:
