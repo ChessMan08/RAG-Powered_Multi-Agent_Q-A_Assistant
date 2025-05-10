@@ -23,21 +23,13 @@ if "logs" not in st.session_state:
 if "history" not in st.session_state:
     st.session_state.history = []  # list of dicts {q, branch, snippets, answer}
 
-# — Display all results FIRST (above input box)
-if st.session_state.history:
-    st.markdown("---")
-    st.header("Batch Results")
-    for entry in st.session_state.history:
-        st.subheader(f"Q: {entry['q']}")
-        st.write("**Branch:**", entry["branch"].upper())
-        if entry["branch"] == "rag":
-            st.write("**Retrieved Context:**")
-            for i, snip in enumerate(entry["snippets"], 1):
-                st.markdown(f"> Snippet {i}: {snip}")
-        st.write("**Answer:**", entry["answer"])
-        st.markdown("---")
+# Check if we requested an input reset
+if st.session_state.get("clear_input"):
+    st.session_state["batch_input"] = ""
+    st.session_state["clear_input"] = False
+    st.experimental_rerun()
 
-# — Input area BELOW the results
+# — Input area BELOW the results, in a form
 with st.form("question_form"):
     batch = st.text_area(
         "Ask Questions", 
@@ -46,6 +38,7 @@ with st.form("question_form"):
     )
     submitted = st.form_submit_button("Submit")
 
+# — On form submit
 if submitted and batch.strip():
     questions = [q.strip() for q in batch.splitlines() if q.strip()]
     for q in questions:
@@ -57,8 +50,10 @@ if submitted and batch.strip():
             "snippets": res["snippets"],
             "answer": res["answer"]
         })
-    # safely clear after form submit
-    st.session_state["batch_input"] = ""
+    # Schedule input reset
+    st.session_state["clear_input"] = True
+    st.experimental_rerun()
+
 
 
 # — Sidebar: full agent log
