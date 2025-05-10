@@ -39,7 +39,7 @@ if st.session_state.history:
 # — Then show the input area at the bottom
 batch = st.text_area(
     "Ask Questions", 
-    height=50
+    height=68
 )
 if st.button("Submit") and batch.strip():
     questions = [q.strip() for q in batch.splitlines() if q.strip()]
