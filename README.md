@@ -14,7 +14,7 @@ The interface shows the question, which agent branch was taken, the answer, and 
 
 ![App Demo](images/interface.png)
 
-_Figure: Example Streamlit interface. The user’s query is submitted in the right panel, the answer is shown below it, and the left panel logs which agent (branch) handled each query. Retrieved document snippets can be revealed by clicking “Show Retrieved Context Snippets.”_
+_Figure: Example Streamlit interface. The user’s query is submitted in the right panel, the answer is shown below it, and the left panel logs which agent (branch) handled each query. Retrieved document snippets is also shown._
 
 ## Architecture
 
