@@ -38,13 +38,15 @@ if st.session_state.history:
         st.markdown("---")
 
 # — Input area BELOW the results
-batch = st.text_area(
-    "Ask Questions", 
-    height=68,
-    key="batch_input"
-)
+with st.form("question_form"):
+    batch = st.text_area(
+        "Ask Questions", 
+        height=68,
+        key="batch_input"
+    )
+    submitted = st.form_submit_button("Submit")
 
-if st.button("Submit") and batch.strip():
+if submitted and batch.strip():
     questions = [q.strip() for q in batch.splitlines() if q.strip()]
     for q in questions:
         res = handle_query(q)
@@ -55,8 +57,9 @@ if st.button("Submit") and batch.strip():
             "snippets": res["snippets"],
             "answer": res["answer"]
         })
-    # clear input after submit
-    st.session_state.batch_input = ""
+    # safely clear after form submit
+    st.session_state["batch_input"] = ""
+
 
 # — Sidebar: full agent log
 with st.sidebar:
