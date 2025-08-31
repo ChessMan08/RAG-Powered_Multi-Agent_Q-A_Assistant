@@ -8,8 +8,6 @@ It answers queries by
 
 If a query contains the word `“calculate”`, the app routes it to a `simple calculator agent`; if it contains `“define”`, it routes to a `WordNet dictionary agent`. Otherwise it performs RAG: it embeds the query (with all-MiniLM-L6-v2) and finds the top relevant chunks from the FAISS index, then combines those snippets with the query to prompt the **Flan-T5-small** LLM for an answer. 
 
-**Demo:** https://rag-poweredmulti-agentq-aassistant-jdzsgxsqhggy9gwbhumy4c.streamlit.app
-
 ## Interface
 
 The interface shows the question, which agent branch was taken, the answer, and (for RAG queries) a button to reveal the retrieved context snippets.
